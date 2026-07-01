@@ -1,65 +1,227 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState, useRef } from "react";
+import { FaMapLocationDot, FaWhatsapp } from "react-icons/fa6";
+import { FaVolumeXmark, FaVolumeHigh } from "react-icons/fa6";
+
+// Type definition for our Sakura petal state
+interface Petal {
+  id: number;
+  left: number;
+  delay: number;
+  duration: number;
+}
 
 export default function Home() {
+  const [petals, setPetals] = useState<Petal[]>([]);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Sakura animation logic: Generates a new petal every 500ms
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPetals((currentPetals) => {
+        // Keep a maximum of 15 petals on screen for performance
+        if (currentPetals.length > 15) return currentPetals;
+
+        const newPetal = {
+          id: Date.now() + Math.random(),
+          left: Math.random() * 100, // random start position
+          delay: Math.random() * 2,
+          duration: 5 + Math.random() * 5,
+        };
+
+        return [...currentPetals, newPetal];
+      });
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Clean up petals that have finished falling (approx 10 seconds)
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      setPetals((currentPetals) =>
+        currentPetals.filter((petal) => Date.now() - petal.id < 11000)
+      );
+    }, 2000);
+    return () => clearInterval(cleanupInterval);
+  }, []);
+
+  // Audio Play/Pause Toggle
+  const togglePlay = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        audioRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((err) => console.log("User interaction required:", err));
+      }
+    }
+  };
+
+  // Handle first interaction auto-play
+  useEffect(() => {
+    const handleFirstClick = () => {
+      if (!isPlaying) togglePlay();
+      document.removeEventListener("click", handleFirstClick);
+    };
+    document.addEventListener("click", handleFirstClick);
+    return () => document.removeEventListener("click", handleFirstClick);
+  }, [isPlaying]);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <main
+      className="w-full h-full flex justify-center items-center"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Background and Sakura */}
+      <div id="background-container"></div>
+
+      <div
+        id="new-bg-elements"
+        className="absolute top-0 left-0 w-full h-full -z-10 overflow-hidden pointer-events-none"
+      >
+        {petals.map((petal) => (
+          <div
+            key={petal.id}
+            className="sakura-petal"
+            style={{
+              left: `${petal.left}vw`,
+              animationDelay: `${petal.delay}s`,
+              animationDuration: `${petal.duration}s`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Invitation Card */}
+      <div id="invitation-card" onClick={(e) => e.stopPropagation()}>
+        <div className="heart-icon" style={{ mt: "5px" }}>
+          🌿 ✦ 🌿
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        <div className="arabic-text">
+          تَوَادُّوا تَحَابُّوا كَمَا يُزْرَعُ الحُبُّ فِي قُلُوبٍ صَافِيَةٍ
+          <br />
+          يُثْمِرُ أُنْساً مَدَى الحَيَاةِ وَيَسْقِي رِضَاءَ الرَّحْمَنِ
+        </div>
+
+        <div className="heart-icon">✦</div>
+
+        <div className="script-text">
+          <span>مُوسَى</span>
+          <span className="ampersand">&</span>
+          <span>رَاوِيَة</span>
+        </div>
+
+        <div className="heart-icon">✦</div>
+
+        <div
+          className="arabic-text"
+          style={{
+            fontWeight: "normal",
+            fontSize: "clamp(0.85rem, 3.5vw, 1.05rem)",
+          }}
+        >
+          وَمَنْ يَتَّقِ اللَّهَ يَجْعَلْ لَهُ مَخْرَجًا
+          <br />
+          وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ
+        </div>
+
+        <div className="arabic-text">
+          نتشرف بدعوتكم لمشاركتنا فرحتنا
+          <br />
+          وتناول وجبة الغداء
+          <br />
+          <span
+            style={{
+              fontSize: "1.25em",
+              color: "#8c6d31",
+              display: "block",
+              margin: "2px 0",
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
+            فِي مَنْزِلِنَا العَامِرِ
+          </span>
+          <span style={{ fontSize: "0.85em", color: "#8c6d31" }}>
+            ـ ◦ هـ قرية بورتوبيل هـ ◦ ـ
+          </span>
+        </div>
+
+        <div>
+          <span
+            style={{
+              fontSize: "clamp(0.9rem, 3.5vw, 1.1rem)",
+              fontWeight: "bold",
+            }}
+          >
+            يوم الجمعة
+          </span>
+          <div className="date-text">
+            <span className="date-icon">🌿</span>
+            3/7
+            <span
+              className="date-icon"
+              style={{ transform: "scaleX(-1)", display: "inline-block" }}
+            >
+              🌿
+            </span>
+          </div>
+        </div>
+
+        <div
+          className="arabic-text"
+          style={{
+            color: "#4a3b2c",
+            fontSize: "clamp(0.95rem, 3.8vw, 1.1rem)",
+          }}
+        >
+          بحضوركم تكتمل فرحتنا
+        </div>
+
+        <div className="buttons-container">
+          <a
+            href="https://maps.google.com"
+            target="_blank"
+            rel="noreferrer"
+            className="action-button btn-location"
+          >
+            <FaMapLocationDot />
+            موقع الفرح
           </a>
+
           <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            href="https://wa.me/0000000000?text=يسعدني+تلبية+الدعوة+وتأكيد+حضور+حفل+زفاف+موسى+وراوية"
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noreferrer"
+            className="action-button btn-whatsapp"
           >
-            Documentation
+            <FaWhatsapp />
+            تأكيد الحضور
           </a>
         </div>
-      </main>
-    </div>
+      </div>
+
+      {/* Audio Element & Controls */}
+      <audio ref={audioRef} loop preload="auto">
+        <source src="/arous_alnour.mp3" type="audio/mpeg" />
+      </audio>
+
+      <div id="audio-controls" onClick={togglePlay}>
+        {isPlaying ? (
+          <FaVolumeHigh className="play-icon" />
+        ) : (
+          <FaVolumeXmark className="play-icon" />
+        )}
+      </div>
+    </main>
   );
 }
