@@ -34,3 +34,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## create, the codebase file:
+
+rm -f codebase.txt && (tree -I '.next|.vercel|node_modules|codebase.txt'; find . -type d \( -name .next -o -name .vercel -o -name node_modules \) -prune -o -type f ! -name "codebase.txt" -print | while read -r file; do echo -e "\n=== $file ==="; cat "$file"; done) > codebase.txt

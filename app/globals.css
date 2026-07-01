@@ -7,7 +7,7 @@ html {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #f7f2e7;
+  /* background-color: #f7f2e7; */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -22,7 +22,7 @@ html {
   left: -2%;
   width: 104%;
   height: 104%;
-  background-image: url("/227420_3.png"); /* Points to public folder */
+  background-image: url("/background.png"); /* ← replace with your own image */
   background-size: cover;
   background-position: center;
   z-index: -2;

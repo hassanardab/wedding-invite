@@ -4,7 +4,6 @@ import { useEffect, useState, useRef } from "react";
 import { FaMapLocationDot, FaWhatsapp } from "react-icons/fa6";
 import { FaVolumeXmark, FaVolumeHigh } from "react-icons/fa6";
 
-// Type definition for our Sakura petal state
 interface Petal {
   id: number;
   left: number;
@@ -17,28 +16,23 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Sakura animation logic: Generates a new petal every 500ms
+  // Sakura animation
   useEffect(() => {
     const interval = setInterval(() => {
       setPetals((currentPetals) => {
-        // Keep a maximum of 15 petals on screen for performance
         if (currentPetals.length > 15) return currentPetals;
-
         const newPetal = {
           id: Date.now() + Math.random(),
-          left: Math.random() * 100, // random start position
+          left: Math.random() * 100,
           delay: Math.random() * 2,
           duration: 5 + Math.random() * 5,
         };
-
         return [...currentPetals, newPetal];
       });
     }, 500);
-
     return () => clearInterval(interval);
   }, []);
 
-  // Clean up petals that have finished falling (approx 10 seconds)
   useEffect(() => {
     const cleanupInterval = setInterval(() => {
       setPetals((currentPetals) =>
@@ -48,34 +42,63 @@ export default function Home() {
     return () => clearInterval(cleanupInterval);
   }, []);
 
-  // Audio Play/Pause Toggle
+  // Audio toggle
   const togglePlay = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch((err) => console.log("User interaction required:", err));
-      }
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      audioRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch((err) => console.log("User interaction required:", err));
     }
   };
 
-  // Handle first interaction auto-play
+  // 🔥 FIXED: improved autoplay logic
   useEffect(() => {
-    const handleFirstClick = () => {
-      if (!isPlaying) togglePlay();
-      document.removeEventListener("click", handleFirstClick);
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const tryPlay = () => {
+      audio
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {
+          // Autoplay blocked – will wait for user interaction
+        });
     };
-    document.addEventListener("click", handleFirstClick);
-    return () => document.removeEventListener("click", handleFirstClick);
-  }, [isPlaying]);
+
+    // Try autoplay once the audio is loaded
+    if (audio.readyState >= 2) {
+      tryPlay();
+    } else {
+      audio.addEventListener("canplaythrough", tryPlay, { once: true });
+    }
+
+    // Fallback: play on first user interaction
+    const handleInteraction = () => {
+      if (audio.paused) {
+        audio
+          .play()
+          .then(() => setIsPlaying(true))
+          .catch(console.error);
+      }
+      document.removeEventListener("click", handleInteraction);
+      document.removeEventListener("touchstart", handleInteraction);
+    };
+
+    document.addEventListener("click", handleInteraction);
+    document.addEventListener("touchstart", handleInteraction);
+
+    return () => {
+      document.removeEventListener("click", handleInteraction);
+      document.removeEventListener("touchstart", handleInteraction);
+      audio.removeEventListener("canplaythrough", tryPlay);
+    };
+  }, []);
 
   return (
     <main
@@ -104,7 +127,7 @@ export default function Home() {
 
       {/* Invitation Card */}
       <div id="invitation-card" onClick={(e) => e.stopPropagation()}>
-        <div className="heart-icon" style={{ mt: "5px" }}>
+        <div className="heart-icon" style={{ marginTop: "5px" }}>
           🌿 ✦ 🌿
         </div>
 
@@ -212,7 +235,7 @@ export default function Home() {
 
       {/* Audio Element & Controls */}
       <audio ref={audioRef} loop preload="auto">
-        <source src="/arous_alnour.mp3" type="audio/mpeg" />
+        <source src="/background_music.mp3" type="audio/mpeg" />
       </audio>
 
       <div id="audio-controls" onClick={togglePlay}>
