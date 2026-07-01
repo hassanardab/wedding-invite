@@ -222,7 +222,7 @@ export default function Home() {
           </a>
 
           <a
-            href="https://wa.me/0000000000?text=يسعدني+تلبية+الدعوة+وتأكيد+حضور+حفل+زفاف+موسى+وراوية"
+            href="https://wa.me/+249933020516?text=يسعدني+تلبية+الدعوة+وتأكيد+حضور+حفل+زفاف+موسى+وراوية"
             target="_blank"
             rel="noreferrer"
             className="action-button btn-whatsapp"
